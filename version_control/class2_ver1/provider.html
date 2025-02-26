@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<!-- 
+    KV5035 Software Architecture
+    A webpage that will display live data about Haymarket Metro station.
+    It uses the Tyne and Wear Metro Real Time Information API.
+--><!DOCTYPE html>
+<html lang="en"> 
+  <head> 
+    <meta charset="UTF-8" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+    <title>Document</title> <!-- Normally CSS should be in a seperate file --> <!-- I'm just trying to keep everying in one file for simplicity --> 
+    <style>
+
+        body {
+        background-color: #fff8ed;
+        min-height: 500px;
+        text-align: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            margin-top: 20px;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+        }
+
+        p {
+            text-align: right;
+        }
+    </style> 
+  </head> 
+  <body> 
+    <section> 
+      <h1>Live information for: Haymarket</h1> 
+      <h2>Platform 1</h2> 
+      <table id="platform1"></table> 
+      <h2>Platform 2</h2> 
+      <table id="platform2"></table> 
+      <p>Updates every 2 minutes (<em id="updates"></em>).</p> 
+      <section> <!-- Normally JS should be in a seperate file (and in a module) --> <!-- I'm just trying to keep everying in one file for simplicity --> 
+        <script type="text/javascript">
+        window.addEventListener('load',async function (){
+
+            var counter = 0;
+        
+            function displayData(data, platform) {
+                let html = '<tr><th>Destination</th><th>Due in</th></tr>';
+                data.forEach(item => {
+                    html += `<tr><td>${item.destination}</td><td>${item.dueIn} minutes</td></tr>`;
+                });
+    
+                let element = "platform" + platform
+                document.getElementById(element).innerHTML = html;
+            }
+
+            /************************************
+            * Fetch data from the API
+            **************************************/
+            function getData(URL, platform) {
+                fetch(URL)
+                .then(response => response.json())
+                .then(json => {
+                    // if you open the console in the browser you can see the data
+                    console.log(json);
+                    displayData(json, platform);
+                });
+            }
+
+            const showMetroTimes = () => {
+                let updates = "updates";
+
+                if (counter === 0) {
+                    // We pass the API endpoint and the platform number to getData()
+                    getData('https://metro-rti.nexus.org.uk/api/times/HAY/1',1);
+                    getData('https://metro-rti.nexus.org.uk/api/times/HAY/2',2);
+                
+                    document.getElementById(updates).innerHTML = "Updated just now";     
+                } else {
+                    let timepassed = parseInt(counter) * 30;
+                    document.getElementById(updates).innerHTML = "Updated " + timepassed + " seconds ago" ;
+                }
+
+                // I'm using a counter so we can update the 'updated' time every 30 seconds but
+                // only fetch the data every 2 minutes (given the API itself only updates every 2 mins ).
+                counter++;
+                if (counter >= 4) { 
+                    counter = 0;
+                }
+            }
+            
+            showMetroTimes();
+            setInterval(showMetroTimes, 30000)
+
+        });
+
+    </script> 
+      </section> 
+    </section>  
+  </body>
+</html>
